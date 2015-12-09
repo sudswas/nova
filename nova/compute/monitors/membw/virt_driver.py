@@ -40,9 +40,12 @@ class Monitor(base.MemoryBandwidthMonitorBase):
         self._prev_count = {}
         self._data = {}
 
-    def get_metric(self, name):
+    def populate_metric_object(self, name, metric_object):
         self._update_data()
-        return self._data[name], self._data["timestamp"]
+        metric_object.name = name
+        metric_object.numa_membw_values = self._data[name]
+        metric_object.timestamp = self._data['timestamp']
+        metric_object.source = self.source
 
     def _update_data(self):
         # Don't allow to call this function so frequently (<= 1 sec)

@@ -23,6 +23,7 @@ class NUMATopologyFilter(filters.BaseHostFilter):
         cpu_ratio = host_state.cpu_allocation_ratio
         request_spec = filter_properties.get('request_spec', {})
         instance = request_spec.get('instance_properties', {})
+        metrics = host_state.metrics.to_list()
         requested_topology = hardware.instance_topology_from_instance(instance)
         host_topology, _fmt = hardware.host_topology_and_format_from_host(
                 host_state)
@@ -37,7 +38,8 @@ class NUMATopologyFilter(filters.BaseHostFilter):
                         host_topology, requested_topology,
                         limits=limits,
                         pci_requests=pci_requests,
-                        pci_stats=host_state.pci_stats))
+                        pci_stats=host_state.pci_stats,
+                        metrics=metrics))
             if not instance_topology:
                 return False
             host_state.limits['numa_topology'] = limits

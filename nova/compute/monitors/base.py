@@ -46,6 +46,15 @@ class MonitorBase(object):
         """
         raise NotImplementedError('get_metric_names')
 
+    @abc.abstractmethod
+    def populate_metric_object(self, name, metric_object):
+        """Returns the metric object for a requested metric name.
+
+        :param name: The name of the metric.
+        :param metric_object: A mutable reference of the metric object.
+        """
+        raise NotImplementedError('populate_metric_object')
+
     def add_metrics_to_list(self, metrics_list):
         """Adds metric objects to a supplied list object.
 
@@ -56,12 +65,9 @@ class MonitorBase(object):
         metric_names = self.get_metric_names()
         metrics = []
         for name in metric_names:
-            value, timestamp = self.get_metric(name)
-            metric = objects.MonitorMetric(name=name,
-                                           value=value,
-                                           timestamp=timestamp,
-                                           source=self.source)
-            metrics.append(metric)
+            metric_object = objects.MonitorMetric()
+            self.populate_metric_object(name, metric_object)
+            metrics.append(metric_object)
         metrics_list.objects.extend(metrics)
 
 
@@ -81,3 +87,13 @@ class CPUMonitorBase(MonitorBase):
             fields.MonitorMetricType.CPU_IOWAIT_PERCENT,
             fields.MonitorMetricType.CPU_PERCENT,
         ])
+
+class MemoryBandwidthMonitorBase(MonitorBase):
+    """Base class for all monitors that return Memory bw metric"""
+
+    def get_metric_names(self):
+        return set([
+            fields.MonitorMetricType.NUMA_MEM_BW_CURRENT,
+            fields.MonitorMetricType.NUMA_MEM_BW_MAX,
+        ])
+

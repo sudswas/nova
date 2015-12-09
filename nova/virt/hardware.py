@@ -754,7 +754,8 @@ def _numa_fit_instance_cell_with_pinning(host_cell, instance_cell):
             [host_cell.free_cpus], instance_cell, host_cell.id)
 
 
-def _numa_fit_instance_cell(host_cell, instance_cell, limit_cell=None):
+def _numa_fit_instance_cell(host_cell, instance_cell, limit_cell=None,
+                            metrics=None):
     """Check if an instance cell can fit and set it's cell id
 
     :param host_cell: host cell to fit the instance cell onto
@@ -787,6 +788,17 @@ def _numa_fit_instance_cell(host_cell, instance_cell, limit_cell=None):
         cpu_limit = len(host_cell.cpuset) * limit_cell.cpu_allocation_ratio
         ram_limit = host_cell.memory * limit_cell.ram_allocation_ratio
         if memory_usage > ram_limit or cpu_usage > cpu_limit:
+            return None
+        mem_curr = 0
+        mem_total = 0
+        for metric in metrics:
+            if 'numa.membw.current' in metric['name']:
+                mem_curr = metric['numa_membw_values'][str(host_cell.id)]
+            else:
+                mem_total = metric['numa_membw_values'][str(host_cell.id)]
+
+        utili = float(mem_curr) / float(mem_total)
+        if utili > .7:
             return None
 
     pagesize = None
@@ -1060,7 +1072,7 @@ def numa_get_constraints(flavor, image_meta):
 
 def numa_fit_instance_to_host(
         host_topology, instance_topology, limits=None,
-        pci_requests=None, pci_stats=None):
+        pci_requests=None, pci_stats=None, metrics=None):
     """Fit the instance topology onto the host topology given the limits
 
     :param host_topology: objects.NUMATopology object to fit an instance on
@@ -1087,7 +1099,7 @@ def numa_fit_instance_to_host(
             for host_cell, instance_cell in zip(
                     host_cell_perm, instance_topology.cells):
                 got_cell = _numa_fit_instance_cell(
-                    host_cell, instance_cell, limits)
+                    host_cell, instance_cell, limits, metrics)
                 if got_cell is None:
                     break
                 cells.append(got_cell)

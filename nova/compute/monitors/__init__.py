@@ -53,6 +53,7 @@ class MonitorHandler(object):
 
     NAMESPACES = [
         'nova.compute.monitors.cpu',
+        'nova.compute.monitors.numa_mem_bw',
     ]
 
     def __init__(self, resource_tracker):

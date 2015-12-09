@@ -384,6 +384,9 @@ MIN_QEMU_DISCARD_VERSION = (1, 6, 0)
 # this the scheduler cannot make guaranteed decisions, as the
 # guest placement may not match what was requested
 MIN_LIBVIRT_NUMA_VERSION = (1, 2, 7)
+# The PPC support for NUMA came in Libvirt a bit late.
+# Hence, there's a difference in version
+MIN_LIBVIRT_NUMA_VERSION_PPC = (1, 2, 19)
 # Versions of libvirt with known NUMA topology issues
 # See bug #1449028
 BAD_LIBVIRT_NUMA_VERSIONS = [(1, 2, 9, 2)]
@@ -492,6 +495,10 @@ class LibvirtDriver(driver.ComputeDriver):
             'os': self._get_host_sysinfo_serial_os,
             'auto': self._get_host_sysinfo_serial_auto,
         }
+
+        if 'nova.compute.monitors.membw' in CONF.compute_monitors:
+            # initialize PcP
+            self.pcp_inst = pcp_utils.PCPDriver.get_instance()
 
         self._sysinfo_serial_func = sysinfo_serial_funcs.get(
             CONF.libvirt.sysinfo_serial)
@@ -4837,13 +4844,18 @@ class LibvirtDriver(driver.ComputeDriver):
                     self._bad_libvirt_numa_version_warn = True
                 return False
 
-        supported_archs = [arch.I686, arch.X86_64]
+        support_matrix = {(arch.I686, arch.X86_64): MIN_LIBVIRT_NUMA_VERSION,
+                          (arch.PPC64,
+                           arch.PPC64LE): MIN_LIBVIRT_NUMA_VERSION_PPC}
         caps = self._host.get_capabilities()
-
-        return ((caps.host.cpu.arch in supported_archs) and
-                self._host.has_min_version(MIN_LIBVIRT_NUMA_VERSION,
-                                           MIN_QEMU_NUMA_HUGEPAGE_VERSION,
-                                           host.HV_DRIVER_QEMU))
+        is_supported = False
+        for archs, libvirt_ver in support_matrix.iteritems():
+            if ((caps.host.cpu.arch in archs) and
+                    self._host.has_min_version(libvirt_ver,
+                                               MIN_QEMU_NUMA_HUGEPAGE_VERSION,
+                                               host.HV_DRIVER_QEMU)):
+                is_supported = True
+        return is_supported
 
     def _has_hugepage_support(self):
         # This means that the host can support multiple values for the size

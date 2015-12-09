@@ -182,6 +182,9 @@ class Claim(NopClaim):
 
     def _test_numa_topology(self, resources, limit):
         host_topology = resources.get('numa_topology')
+        import json
+        metrics = json.loads(resources.get('metrics'))
+        requested_topology = self.numa_topology
         requested_topology = self.numa_topology
         if host_topology:
             host_topology = objects.NUMATopology.obj_from_db_obj(
@@ -198,7 +201,8 @@ class Claim(NopClaim):
                         host_topology, requested_topology,
                         limits=limit,
                         pci_requests=pci_requests.requests,
-                        pci_stats=pci_stats))
+                        pci_stats=pci_stats,
+                        metrics=metrics))
 
             if requested_topology and not instance_topology:
                 if pci_requests.requests:
