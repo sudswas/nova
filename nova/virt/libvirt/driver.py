@@ -494,9 +494,9 @@ class LibvirtDriver(driver.ComputeDriver):
             'auto': self._get_host_sysinfo_serial_auto,
         }
 
-        #if 'nova.compute.monitors.membw' in CONF.compute_monitors:
+        if 'nova.compute.monitors.membw' in CONF.compute_monitors:
             # initialize PcP
-            #self.pcp_inst = pcp_utils.PCPDriver.get_instance()
+            self.pcp_inst = pcp_utils.PCPDriver.get_instance()
 
         self._sysinfo_serial_func = sysinfo_serial_funcs.get(
             CONF.libvirt.sysinfo_serial)
