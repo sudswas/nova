@@ -66,6 +66,7 @@ class MonitorBase(object):
         metrics = []
         for name in metric_names:
             metric_object = objects.MonitorMetric()
+            metric_object.name = name
             self.populate_metric_object(name, metric_object)
             metrics.append(metric_object)
         metrics_list.objects.extend(metrics)

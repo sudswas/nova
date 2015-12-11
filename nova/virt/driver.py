@@ -1114,6 +1114,30 @@ class ComputeDriver(object):
         """
         raise NotImplementedError()
 
+    def get_max_memory_bw(self, metric_obj):
+        """Get the maximum value for memory bw on a host.
+        This method is expected to be called only once during
+        the lifecycle of the compute process.
+
+        :param metric_obj: A mutable reference of the metric object
+
+        """
+        raise NotImplementedError()
+
+    def get_current_memory_count(self, metric_obj):
+        """Get the aggregated counter values representing the memory
+        bandwidth on the system. Counter values are taken in this case as
+        opposed to the rate because instantenous values of the rate
+        won't represent the bandwidth accurately. So the flexibility is
+        that Nova will read the memory counter values and then should be
+        able to represent a rate by keeping control of the elapsed time
+        between two fetch operations.
+
+        :param metric_obj: A mutable reference of the metric object
+
+        """
+        raise NotImplementedError()
+
     def block_stats(self, instance, disk_id):
         """Return performance counters associated with the given disk_id on the
         given instance.  These are returned as [rd_req, rd_bytes, wr_req,

@@ -24,6 +24,7 @@ from oslo_utils import timeutils
 from nova.compute.monitors import base
 from nova import exception
 from nova.i18n import _LE
+from nova import objects
 
 CONF = cfg.CONF
 CONF.import_opt('compute_driver', 'nova.virt.driver')
@@ -41,13 +42,12 @@ class Monitor(base.MemoryBandwidthMonitorBase):
         self._data = {}
 
     def populate_metric_object(self, name, metric_object):
-        self._update_data()
-        metric_object.name = name
+        self._update_data(metric_obj)
         metric_object.numa_membw_values = self._data[name]
         metric_object.timestamp = self._data['timestamp']
         metric_object.source = self.source
 
-    def _update_data(self):
+    def _update_data(self, metric_object):
         # Don't allow to call this function so frequently (<= 1 sec)
         now = timeutils.utcnow()
         time_diff = 0
@@ -60,17 +60,20 @@ class Monitor(base.MemoryBandwidthMonitorBase):
         self._data = {}
         self._data["timestamp"] = now
         try:
-            mem_counter = self.driver.get_current_memory_bw()
-            if time_diff > 0:
-                current_mem_bw = {}
-                for node in mem_counter.keys():
-                    numa_curr_count = mem_counter[node]
-                    numa_prev_count = self._prev_count.get(node, 0)
-                    if numa_curr_count - numa_prev_count > 0:
-                        bw = numa_curr_count - numa_prev_count / time_diff
-                    current_mem_bw[node] = bw
-            self._data["numa.membw.current"] = current_mem_bw
-            self._data["numa.membw.max"] = self.max_mem_bw
+            if metric_object.name == "numa.membw.current":
+                self.driver.get_current_memory_bw(metric_obj)
+                mem_counter = metric_obj.numa_membw_values
+                if time_diff > 0:
+                    current_mem_bw = {}
+                    for node in mem_counter.keys():
+                        numa_curr_count = mem_counter[node]
+                        numa_prev_count = self._prev_count.get(node, 0)
+                        if numa_curr_count - numa_prev_count > 0:
+                            bw = numa_curr_count - numa_prev_count / time_diff
+                        current_mem_bw[node] = bw
+                metric_obj.numa_membw_values = current_mem_bw
+            elif metric_object.name == "numa.membw.max":
+                metric_obj.numa_membw_values = self.max_mem_bw
             self._prev_count = mem_counter.copy()
         except (NotImplementedError, TypeError, KeyError):
             LOG.exception(_LE("Not all properties needed are implemented "

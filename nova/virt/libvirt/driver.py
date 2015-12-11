@@ -6597,15 +6597,15 @@ class LibvirtDriver(driver.ComputeDriver):
         """Return the current CPU state of the host."""
         return self._host.get_cpu_stats()
 
-    def get_current_memory_bw(self):
+    def get_current_memory_bw(self, metric_obj):
         """Return the current memory PMU counter's aggregated values"""
         mem_counters = self.pcp_inst.get_metric_value('bandwidth.current')
-        return mem_counters
+        monitor_metric.value = mem_counters
 
-    def get_max_memory_bw(self):
+    def get_max_memory_bw(self, metric_obj):
         """Return the max memory PMU counter's aggregated values"""
         max_memory_bw = self.pcp_inst.get_metric_value('bandwidth.count')
-        return max_memory_bw
+        metric_obj.value = max_memory_bw
 
     def get_host_uptime(self):
         """Returns the result of calling "uptime"."""

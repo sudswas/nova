@@ -57,6 +57,28 @@ class MonitorHandler(object):
     ]
 
     def __init__(self, resource_tracker):
+        # NOTE(jaypipes): We used to only have CPU monitors, so
+        # CONF.compute_monitors could contain "virt_driver" without any monitor
+        # type namespace. So, to maintain backwards-compatibility with that
+        # older way of specifying monitors, we first loop through any values in
+        # CONF.compute_monitors and put any non-namespace'd values into the
+        # 'cpu' namespace.
+        self.cfg_monitors = ['cpu.' + cfg if '.' not in cfg else cfg
+                             for cfg in CONF.compute_monitors]
+        # NOTE(jaypipes): Append 'nova.compute.monitors.' to any monitor value
+        # that doesn't have it to allow CONF.compute_monitors to use shortened
+        # namespaces (like 'cpu.' instead of 'nova.compute.monitors.cpu.')
+        self.cfg_monitors = ['nova.compute.monitors.' + cfg
+                             if 'nova.compute.monitors.' not in cfg else cfg
+                             for cfg in self.cfg_monitors]
+
+        # NOTE (sbiswas7): We would want the namespaces to be derived out of
+        # the monitor names. This helps us in not hardcoding the namespace
+        # values. cfg_monitors by now should be a list like this:
+        # [nova.compute.monitors.cpu.xyz]. So we can remove the
+        # 'xyz' and arrive at the namespace values.
+        self.namespaces = [cfg.rsplit('.', 1)[0] for cfg in self.cfg_monitors]
+
         # Dictionary keyed by the monitor type namespace. Value is the
         # first loaded monitor of that namespace or False.
         self.type_monitor_loaded = {ns: False for ns in self.NAMESPACES}
@@ -92,21 +114,7 @@ class MonitorHandler(object):
             LOG.warn(msg)
             return False
 
-        # NOTE(jaypipes): We used to only have CPU monitors, so
-        # CONF.compute_monitors could contain "virt_driver" without any monitor
-        # type namespace. So, to maintain backwards-compatibility with that
-        # older way of specifying monitors, we first loop through any values in
-        # CONF.compute_monitors and put any non-namespace'd values into the
-        # 'cpu' namespace.
-        cfg_monitors = ['cpu.' + cfg if '.' not in cfg else cfg
-                        for cfg in CONF.compute_monitors]
-        # NOTE(jaypipes): Append 'nova.compute.monitors.' to any monitor value
-        # that doesn't have it to allow CONF.compute_monitors to use shortened
-        # namespaces (like 'cpu.' instead of 'nova.compute.monitors.cpu.')
-        cfg_monitors = ['nova.compute.monitors.' + cfg
-                        if 'nova.compute.monitors.' not in cfg else cfg
-                        for cfg in cfg_monitors]
-        if namespace + '.' + ext.name in cfg_monitors:
+        if namespace + '.' + ext.name in self.cfg_monitors:
             self.type_monitor_loaded[namespace] = ext.name
             return True
         msg = _LW("Excluding %(namespace)s monitor %(monitor_name)s. "
