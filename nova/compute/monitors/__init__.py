@@ -41,7 +41,7 @@ compute_monitors_opts = [
                      'An example value that would enable both the CPU and '
                      'NUMA memory bandwidth monitors that used the virt '
                      'driver variant: '
-                     '["cpu.virt_driver", "numa_mem_bw.virt_driver"]'),
+                     '["cpu.virt_driver", "membw.virt_driver"]'),
     ]
 
 CONF = cfg.CONF
@@ -51,10 +51,6 @@ LOG = logging.getLogger(__name__)
 
 class MonitorHandler(object):
 
-    NAMESPACES = [
-        'nova.compute.monitors.cpu',
-        'nova.compute.monitors.numa_mem_bw',
-    ]
 
     def __init__(self, resource_tracker):
         # NOTE(jaypipes): We used to only have CPU monitors, so
