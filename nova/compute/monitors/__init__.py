@@ -77,10 +77,10 @@ class MonitorHandler(object):
 
         # Dictionary keyed by the monitor type namespace. Value is the
         # first loaded monitor of that namespace or False.
-        self.type_monitor_loaded = {ns: False for ns in self.NAMESPACES}
+        self.type_monitor_loaded = {ns: False for ns in self.namespaces}
 
         self.monitors = []
-        for ns in self.NAMESPACES:
+        for ns in self.namespaces:
             plugin_mgr = enabled.EnabledExtensionManager(
                     namespace=ns,
                     invoke_on_load=True,

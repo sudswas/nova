@@ -42,8 +42,7 @@ class Monitor(base.MemoryBandwidthMonitorBase):
         self._data = {}
 
     def populate_metric_object(self, name, metric_object):
-        self._update_data(metric_obj)
-        metric_object.numa_membw_values = self._data[name]
+        self._update_data(metric_object)
         metric_object.timestamp = self._data['timestamp']
         metric_object.source = self.source
 
@@ -61,8 +60,8 @@ class Monitor(base.MemoryBandwidthMonitorBase):
         self._data["timestamp"] = now
         try:
             if metric_object.name == "numa.membw.current":
-                self.driver.get_current_memory_bw(metric_obj)
-                mem_counter = metric_obj.numa_membw_values
+                self.driver.get_current_memory_bw(metric_object)
+                mem_counter = metric_object.numa_membw_values
                 if time_diff > 0:
                     current_mem_bw = {}
                     for node in mem_counter.keys():
@@ -71,10 +70,12 @@ class Monitor(base.MemoryBandwidthMonitorBase):
                         if numa_curr_count - numa_prev_count > 0:
                             bw = numa_curr_count - numa_prev_count / time_diff
                         current_mem_bw[node] = bw
-                metric_obj.numa_membw_values = current_mem_bw
+                    metric_object.numa_membw_values = current_mem_bw
+                else:
+                    metric_object.numa_membw_values = mem_counter
+                self._prev_count = mem_counter.copy()
             elif metric_object.name == "numa.membw.max":
-                metric_obj.numa_membw_values = self.max_mem_bw
-            self._prev_count = mem_counter.copy()
+                metric_object.numa_membw_values = self.max_mem_bw
         except (NotImplementedError, TypeError, KeyError):
             LOG.exception(_LE("Not all properties needed are implemented "
                               "in the compute driver"))

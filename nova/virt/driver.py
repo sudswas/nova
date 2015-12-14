@@ -1114,7 +1114,7 @@ class ComputeDriver(object):
         """
         raise NotImplementedError()
 
-    def get_max_memory_bw(self, metric_obj):
+    def get_max_memory_bw(self):
         """Get the maximum value for memory bw on a host.
         This method is expected to be called only once during
         the lifecycle of the compute process.

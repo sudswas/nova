@@ -27,14 +27,6 @@ class MonitorBase(object):
         self.source = None
 
     @abc.abstractmethod
-    def get_metric(self, name):
-        """Return a (value, timestamp) tuple for the supplied metric name.
-
-        :param name: The name/key for the metric to grab the value for.
-        """
-        raise NotImplementedError('get_metric')
-
-    @abc.abstractmethod
     def get_metric_names(self):
         """Get available metric names.
 
