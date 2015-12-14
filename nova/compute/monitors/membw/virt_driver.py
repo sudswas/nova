@@ -69,7 +69,9 @@ class Monitor(base.MemoryBandwidthMonitorBase):
                         numa_prev_count = self._prev_count.get(node, 0)
                         if numa_curr_count - numa_prev_count > 0:
                             bw = numa_curr_count - numa_prev_count / time_diff
-                        current_mem_bw[node] = bw
+                            current_mem_bw[node] = bw
+                        else:
+                            current_mem_bw[node] = mem_counter[node]
                     metric_object.numa_membw_values = current_mem_bw
                 else:
                     metric_object.numa_membw_values = mem_counter
